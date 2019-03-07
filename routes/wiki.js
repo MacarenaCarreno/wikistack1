@@ -2,15 +2,18 @@ const express = require('express');
 const router = express.Router();
 const addPage = require('../views/addPage')
 const { db, Page, User} = require('../models');
+const wikipage = require('../views/wikipage')
+const main = require('../views/main')
 
 
-
-router.get('/', (req, res)=>{
+router.get('/', async(req, res, next)=>{
+  
   try{
-   res.send('got to Get /wskdakda')
+    const pages = await Page.findAll()
+    res.send(main(pages))
   }
   catch(error){
-    console.log(error)
+    next(error)
   }
 })
 
@@ -19,37 +22,22 @@ router.post('/', async(req, res, next)=>{
       // res.json(req.body)
       // console.log('body', req.body)
       // console.log('name', req.body.name)
-
     const page = new Page({ 
        name:  req.body.name,
         email: req.body.email,
         title: req.body.title,
         content:req.body.content,
         status: req.body.status  
-         });
-    
+         });    
   try{
-     
-    
     await page.save();
     console.log(page)
-    res.redirect('/')
-
+    res.redirect(`/wiki/${page.slug}`)
   }
   catch(error){
    next(error)
   }
-  // try {
-  //   const newwikiPage = await Page.create(req.body)
-  //   res.send(newwikiPage)
-     
-    
-  // } catch (error) {
-  //   console.log(error)
-  // }
-  
-  
-  
+
 })
 
 router.get('/add', (req, res)=>{
@@ -60,6 +48,27 @@ router.get('/add', (req, res)=>{
     console.log(error)
   }
 })
+
+router.get('/:slug', async(req, res, next)=>{
+  try {
+    const page = await Page.findOne({
+      where:{ 
+        slug : req.params.slug
+      }
+    });
+    console.log('wikipage::::', wikipage(page))
+    //res.json(wikipage(page))
+    res.send(wikipage(page))
+
+
+  } catch (error) {
+    next(error)
+
+  }
+});
+
+
+
 
 
 module.exports = router
